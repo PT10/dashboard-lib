@@ -3,7 +3,7 @@ import { NgModule } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { GridsterModule } from 'angular-gridster2';
 import { DashboardComponent } from './dashboard.component';
-import { NgxDashboardEchartsModule } from 'ngx-dashboard-echarts';
+import { NgxDashboardEchartsModule } from '@bolt-analytics/ngx-dashboard-echarts';
 
 
 @NgModule({
