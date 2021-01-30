@@ -123,7 +123,7 @@ import { DashboardService } from './dashboard.service';
             </div>
           </div>
           <div class="section" style="color: black">
-            <lib-echarts [chartOptions]="item.chartOptions"></lib-echarts>
+            <lib-dashboard-echarts [chartOptions]="item.chartOptions"></lib-dashboard-echarts>
           </div>
         </gridster-item>
       </gridster>
@@ -136,7 +136,7 @@ import { DashboardService } from './dashboard.service';
               <b>{{panelToBeEdited.name}}</b>
             </div>
             <div class="panel-body" style="height: 604px; padding: 0px">
-              <lib-echarts [chartOptions]="panelToBeEdited.chartOptions" [editMode]="true"></lib-echarts>
+              <lib-dashboard-echarts [chartOptions]="panelToBeEdited.chartOptions" [editMode]="true"></lib-dashboard-echarts>
             </div>
             <div class="panel-footer panel-dark-background" style="position:relative; overflow:auto;">
               <div class="pull-left" style="margin-left: 10px;">

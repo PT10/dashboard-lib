@@ -3,7 +3,7 @@ import { NgModule } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { GridsterModule } from 'angular-gridster2';
 import { DashboardComponent } from './dashboard.component';
-import { EchartsModule } from 'echarts-dashboard';
+import { NgxDashboardEchartsModule } from 'ngx-dashboard-echarts';
 
 
 @NgModule({
@@ -12,7 +12,7 @@ import { EchartsModule } from 'echarts-dashboard';
     CommonModule,
     FormsModule,
     GridsterModule,
-    EchartsModule
+    NgxDashboardEchartsModule
   ],
   exports: [DashboardComponent]
 })
