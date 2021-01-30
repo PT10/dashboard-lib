@@ -19,11 +19,22 @@
     "@angular/platform-browser": "~8.2.5",
     "@angular/platform-browser-dynamic": "~8.2.5",
     "@angular/router": "~8.2.5",
+    "angular-gridster2": "^8.4.2",
+    "bootstrap": "^3.3.7",
+    "echarts": "^4.2.0-rc.2",
+    "font-awesome": "^4.7.0",
+    "jquery": "^3.3.1",
+    "jquery-ui-dist": "^1.12.1",
+    "ngx-echarts": "^2.3.1",
+    "primeicons": "^1.0.0-beta.7",
+    "primeng": "^5.2.7",
     "rxjs": "~6.4.0",
     "tslib": "^1.10.0",
     "zone.js": "~0.9.1"
   },
   "devDependencies": {
+    "@angular-devkit/build-angular": "~0.803.29",
+    "@angular-devkit/build-ng-packagr": "~0.803.29",
     "@angular/cli": "~8.3.4",
     "@angular/compiler-cli": "~8.2.5",
     "@angular/language-service": "~8.2.5",
@@ -38,8 +49,10 @@
     "karma-coverage-istanbul-reporter": "~2.0.1",
     "karma-jasmine": "~2.0.1",
     "karma-jasmine-html-reporter": "^1.4.0",
+    "ng-packagr": "^5.4.0",
     "protractor": "~5.4.0",
     "ts-node": "~7.0.0",
+    "tsickle": "^0.37.0",
     "tslint": "~5.15.0",
     "typescript": "~3.5.3"
   }

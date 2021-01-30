@@ -1,0 +1,18 @@
+{
+  "name": "dashboard",
+  "version": "0.0.1",
+  "peerDependencies": {
+    "@angular/common": "^8.2.14",
+    "@angular/core": "^8.2.14",
+    "angular-gridster2": "^8.4.2",
+    "bootstrap": "^3.3.7",
+    "echarts": "^4.2.0-rc.2",
+    "echarts-dashboard": "0.0.0",
+    "font-awesome": "^4.7.0",
+    "jquery": "^3.3.1",
+    "jquery-ui-dist": "^1.12.1",
+    "ngx-echarts": "^2.3.1",
+    "primeicons": "^1.0.0-beta.7",
+    "primeng": "^5.2.7"
+  }
+}
