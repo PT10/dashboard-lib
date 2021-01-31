@@ -1,3 +1,2 @@
 cd dist/ngx-dashboard
-npm init --scope=@bolt-analytics
 npm publish --access public
