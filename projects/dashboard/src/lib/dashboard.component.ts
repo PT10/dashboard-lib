@@ -123,7 +123,7 @@ import { DashboardService } from './dashboard.service';
             </div>
           </div>
           <div class="section" style="color: black">
-            <lib-dashboard-echarts [chartOptions]="item.chartOptions"></lib-dashboard-echarts>
+            <lib-dashboard-echarts [chartConfig]="item.chartOptions.chartConfig" [seriesData]="item.chartOptions.seriesData"></lib-dashboard-echarts>
           </div>
         </gridster-item>
       </gridster>
@@ -136,7 +136,36 @@ import { DashboardService } from './dashboard.service';
               <b>{{panelToBeEdited.name}}</b>
             </div>
             <div class="panel-body" style="height: 604px; padding: 0px">
-              <lib-dashboard-echarts [chartOptions]="panelToBeEdited.chartOptions" [editMode]="true"></lib-dashboard-echarts>
+              <div [ngStyle]="{'float': 'left', 'width': '80%', 'height': '100%'}">
+                <div [ngStyle]="{'height': '100%'}">
+                  <lib-dashboard-echarts [chartConfig]="panelToBeEdited.chartOptions.chartConfig" [seriesData]="panelToBeEdited.chartOptions.seriesData"></lib-dashboard-echarts>
+                </div>
+              </div>
+              <div style="float: left; width: 20%; height: 50%; border-left: 5px solid darkgrey;">
+              <div class="panel panel-default" style="min-height: 100%; max-height: 100%; overflow: auto">
+                  <div class="panel-heading">Chart Configuration</div>
+                  <div class="panel-body">
+                    <!-- <ng-container *ngFor="let chart of panelToBeEdited.chartOptions.chartConfig">
+                      <label>{{chart.type}}</label>
+                    </ng-container> -->
+                  </div>
+                </div>
+              </div>
+              <div style="float: left; width: 20%; height: 50%; border-left: 5px solid darkgrey;">
+                <div class="panel panel-default" style="min-height: 100%; max-height: 100%; overflow: auto">
+                  <div class="panel-heading">Series Configuration</div>
+                  <div class="panel-body" style="color: black">
+                    <ng-container *ngFor="let series of panelToBeEdited.chartOptions.seriesData; index as i">
+                      <label>Series {{i + 1}}</label>
+                      <select class="form-control" [(ngModel)]="series.type" (change)="publishChange()">
+                        <option [value]="'pie'">Pie</option>
+                        <option [value]="'gauge'">Gauge</option>
+                        <option [value]="'line'">Line</option>
+                      </select>
+                    </ng-container>
+                  </div>
+                </div>
+              </div>
             </div>
             <div class="panel-footer panel-dark-background" style="position:relative; overflow:auto;">
               <div class="pull-left" style="margin-left: 10px;">
@@ -382,6 +411,10 @@ export class DashboardComponent implements OnInit {
     this.activeDashboardName = this.activeDashboard.name;
 
     this.dashboardChange.emit(this.dashboards);
+  }
+
+  publishChange() {
+    this.activeDashboard = JSON.parse(JSON.stringify(this.activeDashboard));
   }
 
 }
