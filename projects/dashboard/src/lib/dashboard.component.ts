@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
 import { DisplayGrid, GridsterConfig, GridsterItem } from 'angular-gridster2';
 import { DashboardService } from './dashboard.service';
 
@@ -7,10 +7,11 @@ import { DashboardService } from './dashboard.service';
   template: `
   <style>
     gridster {
-    height: 80vh;
-    margin: 0;
-    padding: 0;
-    background-color: rgb(179, 177, 177);
+      height: 80vh;
+      margin: 0;
+      padding: 0;
+      background-color: rgb(179, 177, 177);
+    /* position: inherit !important; */
   }
 
   :host {
@@ -103,18 +104,21 @@ import { DashboardService } from './dashboard.service';
     </button>
   </div>
 </div>
-<div class="row" style="display: flex; height: 100%; flex-direction: column;">
+<div *ngIf="activeDashboard" class="row" style="display: flex; height: 100%; flex-direction: column;">
   <div class="col-12">
     <div class="gridster-container" [ngStyle]="panelEditMode ?  {'display': 'none', 'flex': 1} : {'flex': 1} ">
       <gridster [options]="options" style="background: transparent">
-        <gridster-item [item]="item" *ngFor="let item of activeDashboard.data" style="background: white; border-radius: 3px;">
+        <gridster-item [item]="item" *ngFor="let item of activeDashboard.data; let i= index;" style="background: white; border-radius: 3px;">
           <div [ngClass]="dashboardEditMode ? 'drag-handler widget-header widget-move' : 'drag-handler widget-header'">
             <div class="item-buttons widget-header-buttons">
               <div class="float-left header-margin-left"></div>
                <h4 *ngIf="item.name" style="margin-left: 5px;">{{item.name}}</h4>
             </div>
             <div *ngIf="dashboardEditMode" class="pull-right ">
-              <button class="btn btn-link" style="padding: 0px;" (click)="onEditPanel(item)">
+            <!-- <button class="btn btn-link" style="padding: 0px;" (click)="onEditDataBinding(item, i)">
+                <span class="fa fa-database"></span>
+              </button> -->
+              <button class="btn btn-link" style="padding: 0px;" (click)="onEditPanel(item, i)">
                 <span class="glyphicon glyphicon-pencil"></span>
               </button>
               <button class="btn btn-link" (click)="removeItem(item)">
@@ -141,28 +145,75 @@ import { DashboardService } from './dashboard.service';
                   <lib-dashboard-echarts [chartConfig]="panelToBeEdited.chartOptions.chartConfig" [seriesData]="panelToBeEdited.chartOptions.seriesData"></lib-dashboard-echarts>
                 </div>
               </div>
-              <div style="float: left; width: 20%; height: 50%; border-left: 5px solid darkgrey;">
+              <div *ngIf="panelToBeEdited.chartOptions.chartConfig" style="float: left; width: 20%; height: 50%; border-left: 5px solid darkgrey;">
               <div class="panel panel-default" style="min-height: 100%; max-height: 100%; overflow: auto">
-                  <div class="panel-heading">Chart Configuration</div>
-                  <div class="panel-body">
-                    <!-- <ng-container *ngFor="let chart of panelToBeEdited.chartOptions.chartConfig">
-                      <label>{{chart.type}}</label>
-                    </ng-container> -->
+                  <div class="panel-heading"><label>Chart Configuration</label></div>
+                  <div class="panel-body" style="color: black">
+                    <p-accordion [multiple]="true">
+                      <p-accordionTab header="Legend" [selected]="true">
+                        <div *ngIf="panelToBeEdited.chartOptions.chartConfig.legend" class="row">
+                          <div class="col-md-12">
+                            <div *ngIf="panelToBeEdited.chartOptions.chartConfig.legend.top" class=" row">
+                              <div class="col-md-12">
+                                <label>Padding top</label>
+                                <input class="form-control" type="text" [(ngModel)]="panelToBeEdited.chartOptions.chartConfig.legend.top" (change)="publishChange()">
+                              </div>
+                            </div>
+                            <div *ngIf="panelToBeEdited.chartOptions.chartConfig.legend.left" class=" row">
+                              <div class="col-md-12">
+                                <label>Position</label>
+                                <select class="form-control" [(ngModel)]="panelToBeEdited.chartOptions.chartConfig.legend.left" (change)="publishChange()">
+                                  <option [value]="'center'">Center</option>
+                                  <option [value]="'left'">Left</option>
+                                  <option [value]="'right'">Right</option>
+                                </select>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </p-accordionTab>
+                      <p-accordionTab header="X axis">
+                        <div *ngIf="panelToBeEdited.chartOptions.chartConfig.xAxis" class="row">
+                          <div class="col-md-12">
+                            <label>Type</label>
+                            <input class="form-control" [(ngModel)]="panelToBeEdited.chartOptions.chartConfig.xAxis.type">
+                          </div>
+                        </div>
+                      </p-accordionTab>
+                      <p-accordionTab header="Y axis">
+                        <div *ngIf="panelToBeEdited.chartOptions.chartConfig.yAxis" class="row">
+                          <div class="col-md-12">
+                            <label>Type</label>
+                            <input class="form-control" [(ngModel)]="panelToBeEdited.chartOptions.chartConfig.yAxis.type">
+                          </div>
+                        </div>
+                      </p-accordionTab>
+                    </p-accordion>
                   </div>
                 </div>
               </div>
               <div style="float: left; width: 20%; height: 50%; border-left: 5px solid darkgrey;">
                 <div class="panel panel-default" style="min-height: 100%; max-height: 100%; overflow: auto">
-                  <div class="panel-heading">Series Configuration</div>
+                  <div class="panel-heading"><label>Series Configuration</label></div>
                   <div class="panel-body" style="color: black">
-                    <ng-container *ngFor="let series of panelToBeEdited.chartOptions.seriesData; index as i">
-                      <label>Series {{i + 1}}</label>
-                      <select class="form-control" [(ngModel)]="series.type" (change)="publishChange()">
-                        <option [value]="'pie'">Pie</option>
-                        <option [value]="'gauge'">Gauge</option>
-                        <option [value]="'line'">Line</option>
-                      </select>
-                    </ng-container>
+                    <p-accordion [multiple]="true">
+                      <ng-container *ngFor="let series of panelToBeEdited.chartOptions.seriesData; index as i">
+                        <p-accordionTab header="Series {{i + 1}}" [selected]="i === 0 ? true: false">
+                          <div class="row">
+                            <div class="col-md-12">
+                              <label>Type</label>
+                              <select class="form-control" [(ngModel)]="series.type" (change)="publishChange()">
+                                <option [value]="'pie'">Pie</option>
+                                <option [value]="'gauge'">Gauge</option>
+                                <option [value]="'line'">Line</option>
+                                <option [value]="'bar'">Bar</option>
+                                <option [value]="'heatmap'">Heatmap</option>
+                              </select>
+                            </div>
+                          </div>
+                        </p-accordionTab>
+                      </ng-container>
+                    </p-accordion>
                   </div>
                 </div>
               </div>
@@ -184,7 +235,7 @@ import { DashboardService } from './dashboard.service';
   `,
   styles: []
 })
-export class DashboardComponent implements OnInit {
+export class DashboardComponent implements OnInit, OnChanges {
 
   @Input()
   dashboards: any[];
@@ -268,13 +319,13 @@ export class DashboardComponent implements OnInit {
         "ignoreContentClass":"gridster-item-content",
         "ignoreContent":true,
         "dragHandleClass":"drag-handler",
-        "dropOverItems":false
+        "dropOverItems":true
       },
       "resizable":{
         "enabled":false
       },
       "swap":true,
-      "pushItems":true,
+      "pushItems":false,
       "disablePushOnDrag":false,
       "disablePushOnResize":false,
       "pushDirections":{
@@ -283,7 +334,7 @@ export class DashboardComponent implements OnInit {
         "south":true,
         "west":true
       },
-      "pushResizeItems":false,
+      "pushResizeItems":true,
       "disableWindowResize":false,
       "disableWarnings":false
     }
@@ -297,11 +348,18 @@ export class DashboardComponent implements OnInit {
       this.resizeEvent.emit(item);
     };
 
+  }
+
+  ngOnChanges() {
+    if (!this.dashboards || this.dashboards.length === 0) {
+      return;
+    }
+
     this.availableDashboards = this.dashboards;
 
-    //this.dashboardName = this.availableDashboards[0].name;
     this.activeDashboard = this.availableDashboards[0];
     this.activeDashboardName = this.activeDashboard.name;
+
   }
 
   changedOptions() {
@@ -331,11 +389,16 @@ export class DashboardComponent implements OnInit {
     this.activeDashboard.data.unshift(this.dashboardService.getBlankChart());
   }
 
-  onEditPanel(_panel) {
+  onEditPanel(_panel, _dashboardIndex) {
     this.panelEditMode = true;
     this.panelDataBeforeEdit = _panel;
 
     this.panelToBeEdited = JSON.parse(JSON.stringify(_panel));
+    this.panelToBeEdited.originalIndexInDashboard = _dashboardIndex;
+    this.panelToBeEdited.org_cols = this.panelToBeEdited.cols;
+    this.panelToBeEdited.org_rows = this.panelToBeEdited.rows;
+    this.panelToBeEdited.org_x = this.panelToBeEdited.x;
+    this.panelToBeEdited.org_y = this.panelToBeEdited.y;
     this.panelToBeEdited.cols = 14;
     this.panelToBeEdited.rows = 4;
     this.panelToBeEdited.x = 0;
@@ -343,11 +406,20 @@ export class DashboardComponent implements OnInit {
   }
 
   onSavePanelEdit() {
-
+    this.panelEditMode = false;
+    this.panelToBeEdited.cols = this.panelToBeEdited.org_cols;
+    this.panelToBeEdited.rows = this.panelToBeEdited.org_rows;
+    this.panelToBeEdited.x = this.panelToBeEdited.org_x;
+    this.panelToBeEdited.y = this.panelToBeEdited.org_y;
+    this.activeDashboard.data[this.panelToBeEdited.originalIndexInDashboard] = this.panelToBeEdited;
   }
 
   onCancelPanelEdit() {
     this.panelEditMode = false;
+  }
+
+  onEditDataBinding() {
+
   }
 
   onDashboardAdd() {
@@ -414,7 +486,7 @@ export class DashboardComponent implements OnInit {
   }
 
   publishChange() {
-    this.activeDashboard = JSON.parse(JSON.stringify(this.activeDashboard));
+    this.panelToBeEdited = JSON.parse(JSON.stringify(this.panelToBeEdited));
   }
 
 }

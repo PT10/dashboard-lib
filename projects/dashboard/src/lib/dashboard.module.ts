@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { GridsterModule } from 'angular-gridster2';
 import { DashboardComponent } from './dashboard.component';
 import { NgxDashboardEchartsModule } from '@bolt-analytics/ngx-dashboard-echarts';
-
+import {AccordionModule} from 'primeng/accordion';
 
 @NgModule({
   declarations: [DashboardComponent],
@@ -12,7 +12,8 @@ import { NgxDashboardEchartsModule } from '@bolt-analytics/ngx-dashboard-echarts
     CommonModule,
     FormsModule,
     GridsterModule,
-    NgxDashboardEchartsModule
+    NgxDashboardEchartsModule,
+    AccordionModule
   ],
   exports: [DashboardComponent]
 })

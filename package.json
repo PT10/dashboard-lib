@@ -28,7 +28,7 @@
     "jquery-ui-dist": "^1.12.1",
     "ngx-echarts": "^2.3.1",
     "primeicons": "^1.0.0-beta.7",
-    "primeng": "^5.2.7",
+    "primeng": "^8.1.1",
     "rxjs": "~6.4.0",
     "tslib": "^1.10.0",
     "zone.js": "~0.9.1"
