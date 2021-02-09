@@ -127,7 +127,7 @@ import { DashboardService } from './dashboard.service';
             </div>
           </div>
           <div class="section" style="color: black">
-            <lib-dashboard-echarts [chartConfig]="item.chartOptions.chartConfig" [seriesData]="item.chartOptions.seriesData"></lib-dashboard-echarts>
+            <lib-dashboard-echarts [chartConfig]="item.chartOptions.chartConfig" [dataset]="item.chartOptions.dataset"></lib-dashboard-echarts>
           </div>
         </gridster-item>
       </gridster>
@@ -142,7 +142,7 @@ import { DashboardService } from './dashboard.service';
             <div class="panel-body" style="height: 604px; padding: 0px">
               <div [ngStyle]="{'float': 'left', 'width': '80%', 'height': '100%'}">
                 <div [ngStyle]="{'height': '100%'}">
-                  <lib-dashboard-echarts [chartConfig]="panelToBeEdited.chartOptions.chartConfig" [seriesData]="panelToBeEdited.chartOptions.seriesData"></lib-dashboard-echarts>
+                  <lib-dashboard-echarts [chartConfig]="panelToBeEdited.chartOptions.chartConfig" [dataset]="panelToBeEdited.chartOptions.dataset"></lib-dashboard-echarts>
                 </div>
               </div>
               <div *ngIf="panelToBeEdited.chartOptions.chartConfig" style="float: left; width: 20%; height: 50%; border-left: 5px solid darkgrey;">
@@ -197,7 +197,7 @@ import { DashboardService } from './dashboard.service';
                   <div class="panel-heading"><label>Series Configuration</label></div>
                   <div class="panel-body" style="color: black">
                     <p-accordion [multiple]="true">
-                      <ng-container *ngFor="let series of panelToBeEdited.chartOptions.seriesData; index as i">
+                      <ng-container *ngFor="let series of panelToBeEdited.chartOptions.chartConfig.series; index as i">
                         <p-accordionTab header="Series {{i + 1}}" [selected]="i === 0 ? true: false">
                           <div class="row">
                             <div class="col-md-12">
