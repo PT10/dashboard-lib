@@ -1,5 +1,7 @@
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
+import { parseLazyRoute } from '@angular/compiler/src/aot/lazy_routes';
+import { Component, DoCheck, EventEmitter, Input, IterableDiffers, OnChanges, OnInit, Output } from '@angular/core';
 import { DisplayGrid, GridsterConfig, GridsterItem } from 'angular-gridster2';
+import { connectableObservableDescriptor } from 'rxjs/internal/observable/ConnectableObservable';
 import { DashboardService } from './dashboard.service';
 
 @Component({
@@ -127,7 +129,7 @@ import { DashboardService } from './dashboard.service';
             </div>
           </div>
           <div class="section" style="color: black">
-            <lib-dashboard-echarts [chartConfig]="item.chartOptions.chartConfig" [dataset]="item.chartOptions.dataset"></lib-dashboard-echarts>
+            <lib-dashboard-echarts [chartConfig]="item.chartOptions.chartConfig" [dataset]="item.chartOptions.datasetCopy ? item.chartOptions.datasetCopy : item.chartOptions.dataset"></lib-dashboard-echarts>
           </div>
         </gridster-item>
       </gridster>
@@ -142,7 +144,7 @@ import { DashboardService } from './dashboard.service';
             <div class="panel-body" style="height: 604px; padding: 0px">
               <div [ngStyle]="{'float': 'left', 'width': '80%', 'height': '100%'}">
                 <div [ngStyle]="{'height': '100%'}">
-                  <lib-dashboard-echarts [chartConfig]="panelToBeEdited.chartOptions.chartConfig" [dataset]="panelToBeEdited.chartOptions.dataset"></lib-dashboard-echarts>
+                  <lib-dashboard-echarts [chartConfig]="panelToBeEdited.chartOptions.chartConfig" [dataset]="panelToBeEdited.chartOptions.datasetCopy ? panelToBeEdited.chartOptions.datasetCopy : panelToBeEdited.chartOptions.dataset"></lib-dashboard-echarts>
                 </div>
               </div>
               <div *ngIf="panelToBeEdited.chartOptions.chartConfig" style="float: left; width: 20%; height: 50%; border-left: 5px solid darkgrey;">
@@ -235,7 +237,7 @@ import { DashboardService } from './dashboard.service';
   `,
   styles: []
 })
-export class DashboardComponent implements OnInit, OnChanges {
+export class DashboardComponent implements OnInit, OnChanges, DoCheck {
 
   @Input()
   dashboards: any[];
@@ -243,7 +245,13 @@ export class DashboardComponent implements OnInit, OnChanges {
   @Output()
   dashboardChange: EventEmitter<any> = new EventEmitter<any> ();
 
-  constructor(private dashboardService: DashboardService) {}
+  iterableDiffer: any;
+
+  constructor(private dashboardService: DashboardService,
+    private iterableDiffers: IterableDiffers) {
+      this.iterableDiffer = this.iterableDiffers.find([]).create(null);
+  }
+
   public options: GridsterConfig;
   public activeDashboard: {name: string, data: Array<GridsterItem>, options: {}};
   public activeDashboardName: string;
@@ -359,6 +367,64 @@ export class DashboardComponent implements OnInit, OnChanges {
 
     this.activeDashboard = this.availableDashboards[0];
     this.activeDashboardName = this.activeDashboard.name;
+
+  }
+
+  ngDoCheck() {
+    if (!this.activeDashboard || !this.activeDashboard.data) {
+      return;
+    }
+
+    this.activeDashboard.data.forEach(panel => {
+      if (!panel.chartOptions.chartConfig.seriesmerge) {
+        return;
+      }
+
+      let changes = this.iterableDiffer.diff(panel.chartOptions.dataset.source);
+      if (changes) {
+        let source: any[] = JSON.parse(JSON.stringify(panel.chartOptions.dataset.source));
+        const results: any[] = [];
+
+        source = source.sort((a: any, b: any) => {
+          if (new Date(a.timestamp).getTime() === new Date(b.timestamp).getTime()) {
+            return 0;
+          } else if ( new Date(a.timestamp) > new Date(b.timestamp)) {
+            return 1;
+          } else {
+            return -1;
+          }
+        })
+
+        for (let i = 0; i < source.length; i++) {
+          const src = source[i];
+          for (let j = i + 1; j < source.length; j++) {
+            if (source[j]["timestamp"] === src["timestamp"]) { // Duplicate
+              const dest = source[j];
+              dest['dirtybit'] = true;
+              Object.keys(dest).forEach(key => {
+                if (key === 'timestamp' || key === 'dirtybit') {
+                  return;
+                }
+                src[key] = dest[key];
+              })
+            }
+          }
+          if (!source[i]["dirtybit"]) {
+            results.push(JSON.parse(JSON.stringify(source[i])))
+          }
+        }
+
+        if (results.length > 0) {
+          panel.chartOptions.datasetCopy = {
+            dimensions: panel.chartOptions.dataset.dimensions,
+            source: []
+          }
+          results.forEach(result => {
+            panel.chartOptions.datasetCopy.source.push(result);
+          })
+        }
+      }
+    })
 
   }
 
