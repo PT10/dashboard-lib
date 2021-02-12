@@ -245,11 +245,8 @@ export class DashboardComponent implements OnInit, OnChanges, DoCheck {
   @Output()
   dashboardChange: EventEmitter<any> = new EventEmitter<any> ();
 
-  iterableDiffer: any;
-
   constructor(private dashboardService: DashboardService,
     private iterableDiffers: IterableDiffers) {
-      this.iterableDiffer = this.iterableDiffers.find([]).create(null);
   }
 
   public options: GridsterConfig;
@@ -272,6 +269,7 @@ export class DashboardComponent implements OnInit, OnChanges, DoCheck {
   panelDataBeforeEdit: any;
 
   availableDashboards: any[];
+  differMap: any = {};
 
   public inputs = {
     widget: "",
@@ -376,43 +374,64 @@ export class DashboardComponent implements OnInit, OnChanges, DoCheck {
     }
 
     this.activeDashboard.data.forEach(panel => {
-      if (!panel.chartOptions.chartConfig.seriesmerge) {
-        return;
+      if (!this.differMap[panel.panelId]) {
+        this.differMap[panel.panelId] = this.iterableDiffers.find([]).create(null);
       }
 
-      let changes = this.iterableDiffer.diff(panel.chartOptions.dataset.source);
+      if (!panel.chartOptions.chartConfig.seriesMerge) {
+        return;
+      }
+      let changes = this.differMap[panel.panelId].diff(panel.chartOptions.dataset.source);
       if (changes) {
         let source: any[] = JSON.parse(JSON.stringify(panel.chartOptions.dataset.source));
-        const results: any[] = [];
+        let results: any[] = [];
 
-        source = source.sort((a: any, b: any) => {
-          if (new Date(a.timestamp).getTime() === new Date(b.timestamp).getTime()) {
-            return 0;
-          } else if ( new Date(a.timestamp) > new Date(b.timestamp)) {
-            return 1;
-          } else {
-            return -1;
-          }
-        })
+        // Ascending sort on timestamp to reorder late points (if xAxis is a time axis and sort field is mentioned)
+        if (panel.chartOptions.chartConfig.xAxis &&
+           panel.chartOptions.chartConfig.xAxis.type === 'time' &&
+           panel.chartOptions.chartConfig.timeAxisSortField) {
+          source = source.sort((a: any, b: any) => {
+            if (new Date(a[panel.chartOptions.chartConfig.timeAxisSortField]).getTime() === new Date(b[panel.chartOptions.chartConfig.timeAxisSortField]).getTime()) {
+              return 0;
+            } else if ( new Date(a[panel.chartOptions.chartConfig.timeAxisSortField]) > new Date(b[panel.chartOptions.chartConfig.timeAxisSortField])) {
+              return 1;
+            } else {
+              return -1;
+            }
+          })
+        }
 
-        for (let i = 0; i < source.length; i++) {
-          const src = source[i];
-          for (let j = i + 1; j < source.length; j++) {
-            if (source[j]["timestamp"] === src["timestamp"]) { // Duplicate
-              const dest = source[j];
-              dest['dirtybit'] = true;
-              Object.keys(dest).forEach(key => {
-                if (key === 'timestamp' || key === 'dirtybit') {
-                  return;
-                }
-                src[key] = dest[key];
+        // Find duplicates (if uniqueMergeKeys exists)
+        if (panel.chartOptions.chartConfig.uniqueMergeKeys &&
+          panel.chartOptions.chartConfig.uniqueMergeKeys.length > 0) {
+          for (let i = 0; i < source.length; i++) {
+            const src = source[i];
+            for (let j = i + 1; j < source.length; j++) {
+              let uniqueDestStr= '';
+              let uniqueSrcStr = '';
+              panel.chartOptions.chartConfig.uniqueMergeKeys.forEach(uk => {
+                uniqueDestStr += source[j][uk];
+                uniqueSrcStr += src[uk];
               })
+              if (uniqueDestStr === uniqueSrcStr) { // Duplicate found
+                const dest = source[j];
+                dest['dirtybit'] = true;
+                Object.keys(dest).forEach(key => {
+                  if (panel.chartOptions.chartConfig.uniqueMergeKeys.includes(key) || key === 'dirtybit') {
+                    return;
+                  }
+                  src[key] = dest[key];
+                })
+              }
+            }
+            if (!source[i]["dirtybit"]) {
+              results.push(JSON.parse(JSON.stringify(source[i])))
             }
           }
-          if (!source[i]["dirtybit"]) {
-            results.push(JSON.parse(JSON.stringify(source[i])))
-          }
+        } else { // Use only last record
+          results = [JSON.parse(JSON.stringify(source[source.length - 1]))]
         }
+
 
         if (results.length > 0) {
           panel.chartOptions.datasetCopy = {
