@@ -9,7 +9,7 @@ import { DashboardService } from './dashboard.service';
   template: `
   <style>
     gridster {
-      height: 80vh;
+      height: 100%;
       margin: 0;
       padding: 0;
       background-color: rgb(179, 177, 177);
@@ -74,9 +74,13 @@ import { DashboardService } from './dashboard.service';
   .section2 {
     height: 100%;
   }
+
+  .row {
+    margin-right: 0px !important;
+  }
   </style>
-<div *ngIf="availableDashboards && availableDashboards.length > 0" class="row">
-  <div class="col-md-12">
+<div *ngIf="availableDashboards && availableDashboards.length > 0" class="row" style="height: 100%; flex: 1">
+  <div class="col-md-12" [ngStyle]="hideHeader ? {'display' : 'none'} : {}">
     <!-- <span *ngIf="!dashboardEditMode" style="font-size: 24px;" class="pull-left">{{activeDashboard.name}}</span> -->
     <select *ngIf="!dashboardEditMode" [disabled]="panelEditMode" class="form-control input-sm pull-left"  style="font-size: 16px; width: 200px; height: 30px"
       [(ngModel)]="activeDashboardName" (change)="onDashboardChange()">
@@ -107,8 +111,8 @@ import { DashboardService } from './dashboard.service';
   </div>
 </div>
 <div *ngIf="activeDashboard" class="row" style="display: flex; height: 100%; flex-direction: column;">
-  <div class="col-12">
-    <div class="gridster-container" [ngStyle]="panelEditMode ?  {'display': 'none', 'flex': 1} : {'flex': 1} ">
+  <div class="col-12" style="height: 100%">
+    <div class="gridster-container" [ngStyle]="{'display': panelEditMode ? 'none': 'inherit', 'flex': 1, 'height': '100%'}">
       <gridster [options]="options" style="background: transparent">
         <gridster-item [item]="item" *ngFor="let item of activeDashboard.data; let i= index;" style="background: white; border-radius: 3px;">
           <div [ngClass]="dashboardEditMode ? 'drag-handler widget-header widget-move' : 'drag-handler widget-header'">
@@ -241,6 +245,9 @@ export class DashboardComponent implements OnInit, OnChanges, DoCheck {
 
   @Input()
   dashboards: any[];
+
+  @Input()
+  hideHeader: boolean;
 
   @Output()
   dashboardChange: EventEmitter<any> = new EventEmitter<any> ();
@@ -381,70 +388,77 @@ export class DashboardComponent implements OnInit, OnChanges, DoCheck {
       if (!panel.chartOptions.chartConfig.seriesMerge) {
         return;
       }
-      let changes = this.differMap[panel.panelId].diff(panel.chartOptions.dataset.source);
+      const start = panel.chartOptions.dataset.source.length - 100 > 0 ? panel.chartOptions.dataset.source.length - 100 : 0
+      const end = panel.chartOptions.dataset.source.length;
+
+      let changes = this.differMap[panel.panelId].diff(panel.chartOptions.dataset.source)/*.slice(start, end));*/
       if (changes) {
-        let source: any[] = JSON.parse(JSON.stringify(panel.chartOptions.dataset.source));
-        let results: any[] = [];
+        this.updatePanel(panel);
 
-        // Ascending sort on timestamp to reorder late points (if xAxis is a time axis and sort field is mentioned)
-        if (panel.chartOptions.chartConfig.xAxis &&
-           panel.chartOptions.chartConfig.xAxis.type === 'time' &&
-           panel.chartOptions.chartConfig.timeAxisSortField) {
-          source = source.sort((a: any, b: any) => {
-            if (new Date(a[panel.chartOptions.chartConfig.timeAxisSortField]).getTime() === new Date(b[panel.chartOptions.chartConfig.timeAxisSortField]).getTime()) {
-              return 0;
-            } else if ( new Date(a[panel.chartOptions.chartConfig.timeAxisSortField]) > new Date(b[panel.chartOptions.chartConfig.timeAxisSortField])) {
-              return 1;
-            } else {
-              return -1;
-            }
-          })
-        }
-
-        // Find duplicates (if uniqueMergeKeys exists)
-        if (panel.chartOptions.chartConfig.uniqueMergeKeys &&
-          panel.chartOptions.chartConfig.uniqueMergeKeys.length > 0) {
-          for (let i = 0; i < source.length; i++) {
-            const src = source[i];
-            for (let j = i + 1; j < source.length; j++) {
-              let uniqueDestStr= '';
-              let uniqueSrcStr = '';
-              panel.chartOptions.chartConfig.uniqueMergeKeys.forEach(uk => {
-                uniqueDestStr += source[j][uk];
-                uniqueSrcStr += src[uk];
-              })
-              if (uniqueDestStr === uniqueSrcStr) { // Duplicate found
-                const dest = source[j];
-                dest['dirtybit'] = true;
-                Object.keys(dest).forEach(key => {
-                  if (panel.chartOptions.chartConfig.uniqueMergeKeys.includes(key) || key === 'dirtybit') {
-                    return;
-                  }
-                  src[key] = dest[key];
-                })
-              }
-            }
-            if (!source[i]["dirtybit"]) {
-              results.push(JSON.parse(JSON.stringify(source[i])))
-            }
-          }
-        } else { // Use only last record
-          results = [JSON.parse(JSON.stringify(source[source.length - 1]))]
-        }
-
-
-        if (results.length > 0) {
-          panel.chartOptions.datasetCopy = {
-            dimensions: panel.chartOptions.dataset.dimensions,
-            source: []
-          }
-          results.forEach(result => {
-            panel.chartOptions.datasetCopy.source.push(result);
-          })
-        }
       }
     })
+  }
 
+  updatePanel(panel: any) {
+    let source: any[] = JSON.parse(JSON.stringify(panel.chartOptions.dataset.source));
+    let results: any[] = [];
+
+    // Ascending sort on timestamp to reorder late points (if xAxis is a time axis and sort field is mentioned)
+    if (panel.chartOptions.chartConfig.xAxis &&
+       panel.chartOptions.chartConfig.xAxis.type === 'time' &&
+       panel.chartOptions.chartConfig.timeAxisSortField) {
+      source = source.sort((a: any, b: any) => {
+        if (new Date(a[panel.chartOptions.chartConfig.timeAxisSortField]).getTime() === new Date(b[panel.chartOptions.chartConfig.timeAxisSortField]).getTime()) {
+          return 0;
+        } else if ( new Date(a[panel.chartOptions.chartConfig.timeAxisSortField]) > new Date(b[panel.chartOptions.chartConfig.timeAxisSortField])) {
+          return 1;
+        } else {
+          return -1;
+        }
+      })
+    }
+
+    // Find duplicates (if uniqueMergeKeys exists)
+    if (panel.chartOptions.chartConfig.uniqueMergeKeys &&
+      panel.chartOptions.chartConfig.uniqueMergeKeys.length > 0) {
+      for (let i = 0; i < source.length; i++) {
+        const src = source[i];
+        for (let j = i + 1; j < source.length; j++) {
+          let uniqueDestStr= '';
+          let uniqueSrcStr = '';
+          panel.chartOptions.chartConfig.uniqueMergeKeys.forEach(uk => {
+            uniqueDestStr += source[j][uk];
+            uniqueSrcStr += src[uk];
+          })
+          if (uniqueDestStr === uniqueSrcStr) { // Duplicate found
+            const dest = source[j];
+            dest['dirtybit'] = true;
+            Object.keys(dest).forEach(key => {
+              if (panel.chartOptions.chartConfig.uniqueMergeKeys.includes(key) || key === 'dirtybit') {
+                return;
+              }
+              src[key] = dest[key];
+            })
+          }
+        }
+        if (!source[i]["dirtybit"]) {
+          results.push(JSON.parse(JSON.stringify(source[i])))
+        }
+      }
+    } else { // Use only last record
+      results = [JSON.parse(JSON.stringify(source[source.length - 1]))]
+    }
+
+
+    if (results.length > 0) {
+      panel.chartOptions.datasetCopy = {
+        dimensions: panel.chartOptions.dataset.dimensions,
+        source: []
+      }
+      results.forEach(result => {
+        panel.chartOptions.datasetCopy.source.push(result);
+      })
+    }
   }
 
   changedOptions() {
