@@ -115,10 +115,10 @@ import { DashboardService } from './dashboard.service';
     <div class="gridster-container" [ngStyle]="{'display': panelEditMode ? 'none': 'inherit', 'flex': 1, 'height': '100%'}">
       <gridster [options]="options" style="background: transparent">
         <gridster-item [item]="item" *ngFor="let item of activeDashboard.data; let i= index;" style="background: white; border-radius: 3px;">
-          <div [ngClass]="dashboardEditMode ? 'drag-handler widget-header widget-move' : 'drag-handler widget-header'">
+          <div [ngStyle]="!item.chartOptions.showHeader ? {'display': 'none'} : {'display': ''}" [ngClass]="dashboardEditMode ? 'drag-handler widget-header widget-move' : 'drag-handler widget-header'">
             <div class="item-buttons widget-header-buttons">
               <div class="float-left header-margin-left"></div>
-               <h4 *ngIf="item.name" style="margin-left: 5px;">{{item.name}}</h4>
+               <h4 *ngIf="item.name" style="margin-left: 10px;">{{item.name}}</h4>
             </div>
             <div *ngIf="dashboardEditMode" class="pull-right ">
             <!-- <button class="btn btn-link" style="padding: 0px;" (click)="onEditDataBinding(item, i)">
@@ -131,24 +131,32 @@ import { DashboardService } from './dashboard.service';
                 <span class="glyphicon glyphicon-trash"></span>
               </button>
             </div>
+            <div *ngIf="item.chartOptions.realtime && item.chartOptions.loadStatus !== 'Completed'" class="pull-right">
+              <i class="fa fa-spinner fa-spin fa-2x" title="Loading"></i>
+            </div>
           </div>
-          <div class="section" style="color: black">
-            <lib-dashboard-echarts [chartConfig]="item.chartOptions.chartConfig" [dataset]="item.chartOptions.datasetCopy ? item.chartOptions.datasetCopy : item.chartOptions.dataset"></lib-dashboard-echarts>
+          <div class="section" style="color: black; height: 100%" [ngSwitch]="item.chartLibrary">
+            <lib-dashboard-echarts *ngSwitchCase="'echarts'" [chartConfig]="item.chartOptions.chartConfig"
+              [dataset]="item.chartOptions.datasetCopy ? item.chartOptions.datasetCopy : item.chartOptions.dataset"></lib-dashboard-echarts>
+            <lib-dashboard-primeng *ngSwitchCase="'primeng'" [chartConfig]="item.chartOptions.chartConfig"
+              (onEvent)="processEvent(item, $event)"
+              [dataset]="item.chartOptions.datasetCopy ? item.chartOptions.datasetCopy : item.chartOptions.dataset"></lib-dashboard-primeng>
           </div>
         </gridster-item>
       </gridster>
     </div>
-    <div *ngIf="panelToBeEdited" class="gridster-container" [ngStyle]="!panelEditMode ? {'display': 'none', 'flex': 1} : {'flex': 1} ">
-      <gridster [options]="{resizable: {enabled: false}, draggable: {enabled: false}}" style="background: transparent">
+    <div *ngIf="panelToBeEdited" class="gridster-container" [ngStyle]="{'display': panelEditMode ? 'inherit': 'none', 'flex': 1, 'height': '100%'}">
+      <gridster [options]="resetOptions" style="background: transparent;">
         <gridster-item [item]="panelToBeEdited" style="background: white; border-radius: 3px;">
-          <div class="panel panel-default" style="width: 100%">
+          <div class="panel panel-default" style="width: 100%;">
             <div matDialogTitle class="panel-heading panel-dark-background">
               <b>{{panelToBeEdited.name}}</b>
             </div>
             <div class="panel-body" style="height: 604px; padding: 0px">
               <div [ngStyle]="{'float': 'left', 'width': '80%', 'height': '100%'}">
-                <div [ngStyle]="{'height': '100%'}">
-                  <lib-dashboard-echarts [chartConfig]="panelToBeEdited.chartOptions.chartConfig" [dataset]="panelToBeEdited.chartOptions.datasetCopy ? panelToBeEdited.chartOptions.datasetCopy : panelToBeEdited.chartOptions.dataset"></lib-dashboard-echarts>
+                <div [ngStyle]="{'height': '100%'}" [ngSwitch]="panelToBeEdited.chartLibrary">
+                  <lib-dashboard-echarts *ngSwitchCase="'echarts'" [chartConfig]="panelToBeEdited.chartOptions.chartConfig" [dataset]="panelToBeEdited.chartOptions.datasetCopy ? panelToBeEdited.chartOptions.datasetCopy : panelToBeEdited.chartOptions.dataset"></lib-dashboard-echarts>
+                  <lib-dashboard-primeng *ngSwitchCase="'primeng'" [chartConfig]="panelToBeEdited.chartOptions.chartConfig" [dataset]="panelToBeEdited.chartOptions.datasetCopy ? panelToBeEdited.chartOptions.datasetCopy : panelToBeEdited.chartOptions.dataset"></lib-dashboard-primeng>
                 </div>
               </div>
               <div *ngIf="panelToBeEdited.chartOptions.chartConfig" style="float: left; width: 20%; height: 50%; border-left: 5px solid darkgrey;">
@@ -249,14 +257,21 @@ export class DashboardComponent implements OnInit, OnChanges, DoCheck {
   @Input()
   hideHeader: boolean;
 
+  @Input()
+  rowHeight: number
+
   @Output()
   dashboardChange: EventEmitter<any> = new EventEmitter<any> ();
+
+  @Output()
+  onEvent: EventEmitter<any> = new EventEmitter<any> ();
 
   constructor(private dashboardService: DashboardService,
     private iterableDiffers: IterableDiffers) {
   }
 
   public options: GridsterConfig;
+  public resetOptions: GridsterConfig;
   public activeDashboard: {name: string, data: Array<GridsterItem>, options: {}};
   public activeDashboardName: string;
   private resizeEvent: EventEmitter<any> = new EventEmitter<any>();
@@ -289,12 +304,20 @@ export class DashboardComponent implements OnInit, OnChanges, DoCheck {
 
   ngOnInit() {
     this.defaultPanelWidth = (window.document.body.offsetWidth - 190) / 14;
+    this.resetOptions = {
+      "gridType":"fixed",
+      resizable: {enabled: false},
+      draggable: {enabled: false},
+      "setGridSize": true,
+      "fixedColWidth": this.defaultPanelWidth,
+      "fixedRowHeight": this.rowHeight || 170,
+    }
     this.options = {
       "gridType":"fixed",
       "scrollToNewItems": true,
       "setGridSize": true,
       "compactType":"none",
-      "margin":10,
+      "margin": 5,
       "outerMargin":true,
       "outerMarginTop":null,
       "outerMarginRight":null,
@@ -314,7 +337,7 @@ export class DashboardComponent implements OnInit, OnChanges, DoCheck {
       "defaultItemCols":1,
       "defaultItemRows":1,
       "fixedColWidth": this.defaultPanelWidth, // 105,
-      "fixedRowHeight": 170, //this.defaultPanelHeight,
+      "fixedRowHeight": this.rowHeight || 170, //this.defaultPanelHeight,
       "keepFixedHeightInMobile":false,
       "keepFixedWidthInMobile":false,
       "scrollSensitivity":10,
@@ -397,6 +420,18 @@ export class DashboardComponent implements OnInit, OnChanges, DoCheck {
 
       }
     })
+  }
+
+  processEvent(item: any, data: any) {
+    if (item.chartOptions.chartConfig.onEvent) {
+      const variableName = item.chartOptions.chartConfig.onEvent;
+
+      this.activeDashboard.data.forEach(panel => {
+        if (panel.chartOptions.subscriptions && panel.chartOptions.subscriptions.includes(variableName)) {
+          this.onEvent.emit({panel: panel, data: data});
+        }
+      })
+    }
   }
 
   updatePanel(panel: any) {
@@ -515,6 +550,7 @@ export class DashboardComponent implements OnInit, OnChanges, DoCheck {
 
   onCancelPanelEdit() {
     this.panelEditMode = false;
+    this.panelToBeEdited = undefined;
   }
 
   onEditDataBinding() {

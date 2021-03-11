@@ -37,7 +37,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/PT10/echarts-dashboard-lib.git"
+    "url": "git+https://github.com/PT10/dashboard-lib.git"
   },
   "keywords": [
     "Dashboarding"
@@ -45,7 +45,7 @@
   "author": "Prasad Tenndulkar",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/PT10/echarts-dashboard-lib/issues"
+    "url": "https://github.com/PT10/dashboard-lib/issues"
   },
-  "homepage": "https://github.com/PT10/echarts-dashboard-lib#readme"
+  "homepage": "https://github.com/PT10/dashboard-lib#readme"
 }
