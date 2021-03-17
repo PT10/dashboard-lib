@@ -426,11 +426,11 @@ export class DashboardComponent implements OnInit, OnChanges, DoCheck {
     if (item.chartOptions.chartConfig.onEvent) {
       const variableName = item.chartOptions.chartConfig.onEvent;
 
-      this.activeDashboard.data.forEach(panel => {
-        if (panel.chartOptions.subscriptions && panel.chartOptions.subscriptions.includes(variableName)) {
-          this.onEvent.emit({panel: panel, data: data});
-        }
-      })
+      // this.activeDashboard.data.forEach(panel => {
+      //   if (panel.chartOptions.subscriptions && panel.chartOptions.subscriptions.includes(variableName)) {
+          this.onEvent.emit({data: data, variable: variableName});
+      //   }
+      // })
     }
   }
 
