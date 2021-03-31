@@ -78,6 +78,14 @@ import { DashboardService } from './dashboard.service';
   .row {
     margin-right: 0px !important;
   }
+
+  .loading {
+    color: black; 
+    position: absolute; 
+    left: 50%; 
+    top: 50%;
+    z-index: 2
+  }
   </style>
 <div *ngIf="availableDashboards && availableDashboards.length > 0" class="row" style="height: 100%; flex: 1">
   <div class="col-md-12" [ngStyle]="hideHeader ? {'display' : 'none'} : {}">
@@ -131,11 +139,14 @@ import { DashboardService } from './dashboard.service';
                 <span class="glyphicon glyphicon-trash"></span>
               </button>
             </div>
-            <div *ngIf="item.chartOptions.realtime && item.chartOptions.loadStatus !== 'Completed'" class="pull-right">
+           <!-- <div *ngIf="item.chartOptions.showHeader && item.chartOptions.realtime && item.chartOptions.loadStatus !== 'Completed'" class="pull-right">
               <i class="fa fa-spinner fa-spin fa-2x" title="Loading"></i>
-            </div>
+            </div> -->
           </div>
-          <div class="section" style="color: black; height: 100%" [ngSwitch]="item.chartLibrary">
+          <div *ngIf="item.chartOptions.realtime && item.chartOptions.loadStatus !== 'Completed'" class="pull-right">
+            <i class="fa fa-spinner fa-spin fa-4x loading" title="Loading"></i>
+          </div>
+          <div class="section" [ngStyle]="{'color': 'black', 'height': '100%', 'opacity': item.chartOptions.realtime && item.chartOptions.loadStatus !== 'Completed' ? '0.3' : ''}" [ngSwitch]="item.chartLibrary">
             <lib-dashboard-echarts *ngSwitchCase="'echarts'" [chartConfig]="item.chartOptions.chartConfig"
               [dataset]="item.chartOptions.datasetCopy ? item.chartOptions.datasetCopy : item.chartOptions.dataset"></lib-dashboard-echarts>
             <lib-dashboard-primeng *ngSwitchCase="'primeng'" [chartConfig]="item.chartOptions.chartConfig"
