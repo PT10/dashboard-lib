@@ -83,7 +83,7 @@ import { DashboardService } from './dashboard.service';
     color: black; 
     position: absolute; 
     left: 50%; 
-    top: 50%;
+    top: 30%;
     z-index: 2
   }
   </style>
@@ -144,12 +144,14 @@ import { DashboardService } from './dashboard.service';
             </div> -->
           </div>
           <div *ngIf="item.chartOptions.realtime && item.chartOptions.loadStatus !== 'Completed'" class="pull-right">
-            <i class="fa fa-spinner fa-spin fa-4x loading" title="Loading"></i>
+            <i class="fa fa-spinner fa-spin fa-2x loading" title="Loading"></i>
           </div>
           <div class="section" [ngStyle]="{'color': 'black', 'height': '100%', 'opacity': item.chartOptions.realtime && item.chartOptions.loadStatus !== 'Completed' ? '0.3' : ''}" [ngSwitch]="item.chartLibrary">
             <lib-dashboard-echarts *ngSwitchCase="'echarts'" [chartConfig]="item.chartOptions.chartConfig"
               [dataset]="item.chartOptions.datasetCopy ? item.chartOptions.datasetCopy : item.chartOptions.dataset"></lib-dashboard-echarts>
-            <lib-dashboard-primeng *ngSwitchCase="'primeng'" [chartConfig]="item.chartOptions.chartConfig"
+            <lib-dashboard-primeng *ngSwitchCase="'primeng'"
+              [chartConfig]="item.chartOptions.chartConfig"
+              [(searchQuery)]="item.chartOptions.searchQuery" [(timeWindow)]="item.chartOptions.timeWindow"
               (onEvent)="processEvent(item, $event)"
               [dataset]="item.chartOptions.datasetCopy ? item.chartOptions.datasetCopy : item.chartOptions.dataset"></lib-dashboard-primeng>
           </div>
