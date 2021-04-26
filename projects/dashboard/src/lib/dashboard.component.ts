@@ -1,7 +1,5 @@
-import { parseLazyRoute } from '@angular/compiler/src/aot/lazy_routes';
 import { Component, DoCheck, EventEmitter, Input, IterableDiffers, OnChanges, OnInit, Output } from '@angular/core';
 import { DisplayGrid, GridsterConfig, GridsterItem } from 'angular-gridster2';
-import { connectableObservableDescriptor } from 'rxjs/internal/observable/ConnectableObservable';
 import { DashboardService } from './dashboard.service';
 
 @Component({
@@ -14,6 +12,16 @@ import { DashboardService } from './dashboard.service';
       padding: 0;
       background-color: rgb(179, 177, 177);
     /* position: inherit !important; */
+  }
+
+  * /deep/ .ui-messages {
+    margin: 0em !important;
+    padding: 0.6em !important;
+    font-size: 1em !important;
+  }
+
+  * /deep/ .ui-messages-summary {
+    font-weight: normal;
   }
 
   :host {
@@ -120,8 +128,8 @@ import { DashboardService } from './dashboard.service';
 </div>
 <div *ngIf="activeDashboard" class="row" style="display: flex; height: 100%; flex-direction: column;">
   <div class="col-12" style="height: 100%">
-    <div class="gridster-container" [ngStyle]="{'display': panelEditMode ? 'none': 'inherit', 'flex': 1, 'height': '100%'}">
-      <gridster [options]="options" style="background: transparent">
+    <div class="gridster-container" [ngStyle]="{'display': panelEditMode ? 'none': 'inherit', 'flex': 1, 'height': '100%', 'margin': '0 -5px'}">
+      <gridster [options]="options" style="background: transparent; padding: 0px">
         <gridster-item [item]="item" *ngFor="let item of activeDashboard.data; let i= index;" style="background: white; border-radius: 3px;">
           <div [ngStyle]="!item.chartOptions.showHeader ? {'display': 'none'} : {'display': ''}" [ngClass]="dashboardEditMode ? 'drag-handler widget-header widget-move' : 'drag-handler widget-header'">
             <div class="item-buttons widget-header-buttons">
@@ -147,6 +155,7 @@ import { DashboardService } from './dashboard.service';
             <i class="fa fa-spinner fa-spin fa-2x loading" title="Loading"></i>
           </div>
           <div class="section" [ngStyle]="{'color': 'black', 'height': '100%', 'opacity': item.chartOptions.realtime && item.chartOptions.loadStatus !== 'Completed' ? '0.3' : ''}" [ngSwitch]="item.chartLibrary">
+            <p-messages *ngIf="item.chartOptions.showError && item.chartOptions.errorMessage" [(value)]="item.chartOptions.errorMessage"></p-messages>
             <lib-dashboard-echarts *ngSwitchCase="'echarts'" [chartConfig]="item.chartOptions.chartConfig"
               [dataset]="item.chartOptions.datasetCopy ? item.chartOptions.datasetCopy : item.chartOptions.dataset"></lib-dashboard-echarts>
             <lib-dashboard-primeng *ngSwitchCase="'primeng'"

@@ -6,6 +6,8 @@ import { DashboardComponent } from './dashboard.component';
 import { NgxDashboardEchartsModule } from '@bolt-analytics/ngx-dashboard-echarts';
 import { LibDashboardPrimengModule } from '@bolt-analytics/ngx-dashboard-primeng';
 import {AccordionModule} from 'primeng/accordion';
+import {MessagesModule} from 'primeng/messages';
+import {MessageModule} from 'primeng/message';
 
 @NgModule({
   declarations: [DashboardComponent],
@@ -15,7 +17,9 @@ import {AccordionModule} from 'primeng/accordion';
     GridsterModule,
     NgxDashboardEchartsModule,
     LibDashboardPrimengModule,
-    AccordionModule
+    AccordionModule,
+    MessageModule,
+    MessagesModule
   ],
   exports: [DashboardComponent]
 })
