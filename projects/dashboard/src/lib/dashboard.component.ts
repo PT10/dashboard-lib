@@ -88,9 +88,9 @@ import { DashboardService } from './dashboard.service';
   }
 
   .loading {
-    color: black; 
-    position: absolute; 
-    left: 50%; 
+    color: black;
+    position: absolute;
+    left: 50%;
     top: 30%;
     z-index: 2
   }
@@ -131,7 +131,7 @@ import { DashboardService } from './dashboard.service';
     <div class="gridster-container" [ngStyle]="{'display': panelEditMode ? 'none': 'inherit', 'flex': 1, 'height': '100%', 'margin': '0 -5px'}">
       <gridster [options]="options" style="background: transparent; padding: 0px">
         <gridster-item [item]="item" *ngFor="let item of activeDashboard.data; let i= index;" style="background: white; border-radius: 3px;">
-          <div [ngStyle]="!item.chartOptions.showHeader ? {'display': 'none'} : {'display': ''}" [ngClass]="dashboardEditMode ? 'drag-handler widget-header widget-move' : 'drag-handler widget-header'">
+          <div [ngStyle]="!item.chartOptions.showHeader && !dashboardEditMode ? {'display': 'none'} : {'display': ''}" [ngClass]="dashboardEditMode ? 'drag-handler widget-header widget-move' : 'drag-handler widget-header'">
             <div class="item-buttons widget-header-buttons">
               <div class="float-left header-margin-left"></div>
                <h4 *ngIf="item.name" style="margin-left: 10px;">{{item.name}}</h4>
@@ -174,7 +174,7 @@ import { DashboardService } from './dashboard.service';
             <div matDialogTitle class="panel-heading panel-dark-background">
               <b>{{panelToBeEdited.name}}</b>
             </div>
-            <div class="panel-body" style="height: 604px; padding: 0px">
+            <div class="panel-body" style="height: 50vh; padding: 0px">
               <div [ngStyle]="{'float': 'left', 'width': '80%', 'height': '100%'}">
                 <div [ngStyle]="{'height': '100%'}" [ngSwitch]="panelToBeEdited.chartLibrary">
                   <lib-dashboard-echarts *ngSwitchCase="'echarts'" [chartConfig]="panelToBeEdited.chartOptions.chartConfig" [dataset]="panelToBeEdited.chartOptions.datasetCopy ? panelToBeEdited.chartOptions.datasetCopy : panelToBeEdited.chartOptions.dataset"></lib-dashboard-echarts>
@@ -458,13 +458,27 @@ export class DashboardComponent implements OnInit, OnChanges, DoCheck {
 
   updatePanel(panel: any) {
     let source: any[] = JSON.parse(JSON.stringify(panel.chartOptions.dataset.source));
+    panel.chartOptions.dataset.source = [];
+
+    if (source.length < 1) {
+      return;
+    }
+
+    if (!panel.chartOptions.datasetCopy) {
+      panel.chartOptions.datasetCopy = {
+        dimensions: panel.chartOptions.dataset.dimensions,
+        source: []
+      }
+    }
+    let datasetCopySource = [...panel.chartOptions.datasetCopy.source, ...source]
+
     let results: any[] = [];
 
     // Ascending sort on timestamp to reorder late points (if xAxis is a time axis and sort field is mentioned)
     if (panel.chartOptions.chartConfig.xAxis &&
        panel.chartOptions.chartConfig.xAxis.type === 'time' &&
        panel.chartOptions.chartConfig.timeAxisSortField) {
-      source = source.sort((a: any, b: any) => {
+        datasetCopySource = datasetCopySource.sort((a: any, b: any) => {
         if (new Date(a[panel.chartOptions.chartConfig.timeAxisSortField]).getTime() === new Date(b[panel.chartOptions.chartConfig.timeAxisSortField]).getTime()) {
           return 0;
         } else if ( new Date(a[panel.chartOptions.chartConfig.timeAxisSortField]) > new Date(b[panel.chartOptions.chartConfig.timeAxisSortField])) {
@@ -476,32 +490,30 @@ export class DashboardComponent implements OnInit, OnChanges, DoCheck {
     }
 
     // Find duplicates (if uniqueMergeKeys exists)
-    if (panel.chartOptions.chartConfig.uniqueMergeKeys &&
-      panel.chartOptions.chartConfig.uniqueMergeKeys.length > 0) {
-      for (let i = 0; i < source.length; i++) {
-        const src = source[i];
-        for (let j = i + 1; j < source.length; j++) {
-          let uniqueDestStr= '';
-          let uniqueSrcStr = '';
-          panel.chartOptions.chartConfig.uniqueMergeKeys.forEach(uk => {
-            uniqueDestStr += source[j][uk];
-            uniqueSrcStr += src[uk];
-          })
-          if (uniqueDestStr === uniqueSrcStr) { // Duplicate found
-            const dest = source[j];
-            dest['dirtybit'] = true;
-            Object.keys(dest).forEach(key => {
-              if (panel.chartOptions.chartConfig.uniqueMergeKeys.includes(key) || key === 'dirtybit') {
-                return;
-              }
-              src[key] = dest[key];
+    const uniqueKeys = panel.chartOptions.chartConfig.uniqueMergeKeys;
+    if (uniqueKeys && uniqueKeys.length > 0) {
+        const filtered = datasetCopySource.reduce((acc, current) => {
+          const duplicate = acc.find(el => {
+            let uniqueDestStr= '';
+            let uniqueSrcStr = '';
+            uniqueKeys.forEach(uk => {
+              uniqueDestStr += el[uk];
+              uniqueSrcStr += current[uk];
             })
+            return uniqueDestStr === uniqueSrcStr;
+          });
+
+          if (duplicate) {
+            Object.keys(duplicate).forEach(key => {
+              duplicate[key] = current[key];
+            })
+            return acc;
+          } else {
+            return [...acc, current]
           }
-        }
-        if (!source[i]["dirtybit"]) {
-          results.push(JSON.parse(JSON.stringify(source[i])))
-        }
-      }
+        }, []);
+
+        results = JSON.parse(JSON.stringify(filtered))
     } else { // Use only last record
       results = [JSON.parse(JSON.stringify(source[source.length - 1]))]
     }
@@ -556,7 +568,7 @@ export class DashboardComponent implements OnInit, OnChanges, DoCheck {
     this.panelToBeEdited.org_x = this.panelToBeEdited.x;
     this.panelToBeEdited.org_y = this.panelToBeEdited.y;
     this.panelToBeEdited.cols = 14;
-    this.panelToBeEdited.rows = 4;
+    this.panelToBeEdited.rows = 8;
     this.panelToBeEdited.x = 0;
     this.panelToBeEdited.y = 0;
   }
